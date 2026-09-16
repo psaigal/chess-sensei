@@ -1,3 +1,4 @@
+import ChessBoard from "@/components/ChessBoard";
 import MoveCounter from "@/components/MoveCounter";
 
 const ChessGame = () => {
@@ -7,6 +8,7 @@ const ChessGame = () => {
       <p>Your Game</p>
       <p>Chess board coming soon.</p>
       <MoveCounter />
+      <ChessBoard />
     </>
   );
 };
