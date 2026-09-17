@@ -8,7 +8,9 @@ const ChessGame = () => {
       <p>Your Game</p>
       <p>Chess board coming soon.</p>
       <MoveCounter />
-      <ChessBoard />
+      <div style={{ width: "800px", height: "800px" }}>
+        <ChessBoard />
+      </div>
     </>
   );
 };

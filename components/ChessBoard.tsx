@@ -33,10 +33,23 @@ const ChessBoard = () => {
     }
   };
 
+  const makeComputerMove = () => {
+    const possibleMoves = game.current.moves();
+    if (possibleMoves.length === 0) return;
+
+    const randomIndex = Math.floor(Math.random() * possibleMoves.length);
+
+    const nextMove = possibleMoves[randomIndex];
+
+    game.current.move(nextMove);
+    setPosition(game.current.fen());
+  };
+
   return (
     <div>
       <Chessboard options={{ position, onPieceDrop }} />
       {chessError && <p>{chessError}</p>}
+      {isThinking && <p>Sensei is thinking...</p>}
     </div>
   );
 };
