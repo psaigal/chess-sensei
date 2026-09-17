@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 
@@ -33,10 +33,6 @@ const ChessBoard = () => {
 
       setPosition(game.current.fen());
       setIsThinking(true);
-      setTimeout(() => {
-        makeComputerMove();
-        setIsThinking(false);
-      }, 500);
 
       return true;
     } catch (error) {
@@ -45,7 +41,7 @@ const ChessBoard = () => {
     }
   };
 
-  const makeComputerMove = () => {
+  const makeComputerMove = useCallback(() => {
     const possibleMoves = game.current.moves();
     if (possibleMoves.length === 0) return;
 
@@ -55,7 +51,20 @@ const ChessBoard = () => {
 
     game.current.move(nextMove);
     setPosition(game.current.fen());
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!isThinking) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      makeComputerMove();
+      setIsThinking(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [isThinking, makeComputerMove]);
 
   return (
     <div>
