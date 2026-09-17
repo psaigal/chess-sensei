@@ -18,14 +18,26 @@ const ChessBoard = () => {
     targetSquare: string;
   }) => {
     setChessError(null);
+
+    const isComputerTurn = game.current.turn() === "b";
+
+    if (isComputerTurn) {
+      return false;
+    }
     try {
-      game.current.move({
+      const move = game.current.move({
         from: sourceSquare,
         to: targetSquare,
         promotion: "q",
       });
 
       setPosition(game.current.fen());
+      setIsThinking(true);
+      setTimeout(() => {
+        makeComputerMove();
+        setIsThinking(false);
+      }, 500);
+
       return true;
     } catch (error) {
       setChessError("Invalid move");
