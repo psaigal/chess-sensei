@@ -6,6 +6,8 @@ import { Chessboard } from "react-chessboard";
 
 const ChessBoard = () => {
   const game = useRef(new Chess());
+  const stockfishWorker = useRef<Worker | null>(null);
+
   const [position, setPosition] = useState(game.current.fen());
   const [chessError, setChessError] = useState<string | null>(null);
   const [isThinking, setIsThinking] = useState(false);
@@ -25,7 +27,7 @@ const ChessBoard = () => {
       return false;
     }
     try {
-      const move = game.current.move({
+      game.current.move({
         from: sourceSquare,
         to: targetSquare,
         promotion: "q",
@@ -51,6 +53,24 @@ const ChessBoard = () => {
 
     game.current.move(nextMove);
     setPosition(game.current.fen());
+  }, []);
+
+  useEffect(() => {
+    stockfishWorker.current = new Worker(
+      new URL("../workers/stockfish.worker.ts", import.meta.url),
+    );
+
+    stockfishWorker.current.onmessage = (event) => {
+      console.log(event.data);
+    };
+
+    stockfishWorker.current.postMessage("hello");
+
+    return () => {
+      if (stockfishWorker.current) {
+        stockfishWorker.current.terminate();
+      }
+    };
   }, []);
 
   useEffect(() => {
