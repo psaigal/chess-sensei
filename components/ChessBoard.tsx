@@ -11,6 +11,7 @@ const ChessBoard = () => {
   const [position, setPosition] = useState(game.current.fen());
   const [chessError, setChessError] = useState<string | null>(null);
   const [isThinking, setIsThinking] = useState(false);
+  const latestScore = useRef<number | null>(null);
 
   const onPieceDrop = ({
     sourceSquare,
@@ -32,6 +33,11 @@ const ChessBoard = () => {
         to: targetSquare,
         promotion: "q",
       });
+
+      stockfishWorker.current?.postMessage(
+        `position fen ${game.current.fen()}`,
+      );
+      stockfishWorker.current?.postMessage("go depth 10");
 
       setPosition(game.current.fen());
       setIsThinking(true);
@@ -61,12 +67,26 @@ const ChessBoard = () => {
     );
 
     stockfishWorker.current.onmessage = (event) => {
-      console.log(event.data);
+      const eventData = event.data;
+      if (eventData === "uciok") {
+        stockfishWorker.current?.postMessage(
+          `position fen ${game.current.fen()}`,
+        );
+        stockfishWorker.current?.postMessage("go depth 10");
+      }
+      const match = eventData.match(/score cp (-?\d+)/);
+      if (match) {
+        latestScore.current = Number(match[1]);
+      }
+
+      const bestMove = eventData.match(/bestmove (\S+)/);
+      if (bestMove) {
+        console.log({ evaluation: latestScore.current });
+        console.log({ bestMove: bestMove[1] });
+      }
     };
 
     stockfishWorker.current.postMessage("uci");
-    stockfishWorker.current.postMessage("position startpos");
-    stockfishWorker.current.postMessage("go depth 10");
 
     return () => {
       if (stockfishWorker.current) {
