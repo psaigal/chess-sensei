@@ -57,18 +57,21 @@ const ChessBoard = () => {
 
   useEffect(() => {
     stockfishWorker.current = new Worker(
-      new URL("../workers/stockfish.worker.ts", import.meta.url),
+      "/stockfish/stockfish-19-lite-single.js",
     );
 
     stockfishWorker.current.onmessage = (event) => {
       console.log(event.data);
     };
 
-    stockfishWorker.current.postMessage("hello");
+    stockfishWorker.current.postMessage("uci");
+    stockfishWorker.current.postMessage("position startpos");
+    stockfishWorker.current.postMessage("go depth 10");
 
     return () => {
       if (stockfishWorker.current) {
         stockfishWorker.current.terminate();
+        stockfishWorker.current = null;
       }
     };
   }, []);
