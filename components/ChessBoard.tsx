@@ -9,13 +9,21 @@ type Analysis = {
   bestMove: string;
 };
 
+type TotalAnalysis = {
+  before: Analysis | null;
+  after: Analysis | null;
+};
+
 const ChessBoard = () => {
   const game = useRef(new Chess());
   const stockfishWorker = useRef<Worker | null>(null);
 
   const [position, setPosition] = useState(game.current.fen());
   const [chessError, setChessError] = useState<string | null>(null);
-  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [analysis, setAnalysis] = useState<TotalAnalysis>({
+    before: null,
+    after: null,
+  });
   const [isThinking, setIsThinking] = useState(false);
   const latestScore = useRef<number | null>(null);
 
@@ -57,6 +65,7 @@ const ChessBoard = () => {
     }
   };
 
+  // intial setup for Stockfish
   useEffect(() => {
     stockfishWorker.current = new Worker(
       "/stockfish/stockfish-19-lite-single.js",
@@ -77,9 +86,14 @@ const ChessBoard = () => {
 
       const bestMove = eventData.match(/bestmove (\S+)/);
       if (bestMove) {
-        setAnalysis({
-          evaluation: latestScore.current!,
-          bestMove: bestMove[1],
+        setAnalysis((prev) => {
+          return {
+            ...prev,
+            before: {
+              evaluation: latestScore.current!,
+              bestMove: bestMove[1],
+            },
+          };
         });
       }
     };
