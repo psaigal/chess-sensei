@@ -1,8 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
+
+type Analysis = {
+  evaluation: number;
+  bestMove: string;
+};
 
 const ChessBoard = () => {
   const game = useRef(new Chess());
@@ -10,8 +15,11 @@ const ChessBoard = () => {
 
   const [position, setPosition] = useState(game.current.fen());
   const [chessError, setChessError] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [isThinking, setIsThinking] = useState(false);
   const latestScore = useRef<number | null>(null);
+
+  console.log({ analysis });
 
   const onPieceDrop = ({
     sourceSquare,
@@ -49,18 +57,6 @@ const ChessBoard = () => {
     }
   };
 
-  const makeComputerMove = useCallback(() => {
-    const possibleMoves = game.current.moves();
-    if (possibleMoves.length === 0) return;
-
-    const randomIndex = Math.floor(Math.random() * possibleMoves.length);
-
-    const nextMove = possibleMoves[randomIndex];
-
-    game.current.move(nextMove);
-    setPosition(game.current.fen());
-  }, []);
-
   useEffect(() => {
     stockfishWorker.current = new Worker(
       "/stockfish/stockfish-19-lite-single.js",
@@ -81,8 +77,10 @@ const ChessBoard = () => {
 
       const bestMove = eventData.match(/bestmove (\S+)/);
       if (bestMove) {
-        console.log({ evaluation: latestScore.current });
-        console.log({ bestMove: bestMove[1] });
+        setAnalysis({
+          evaluation: latestScore.current!,
+          bestMove: bestMove[1],
+        });
       }
     };
 
@@ -102,12 +100,11 @@ const ChessBoard = () => {
     }
 
     const timer = setTimeout(() => {
-      makeComputerMove();
       setIsThinking(false);
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [isThinking, makeComputerMove]);
+  }, [isThinking]);
 
   return (
     <div>
