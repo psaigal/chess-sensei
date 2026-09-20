@@ -7,7 +7,7 @@ import { Chessboard } from "react-chessboard";
 type Analysis = {
   evaluation: number;
   bestMove: string;
-  sideToMove: string;
+  sideToMove: "white" | "black";
 };
 
 type TotalAnalysis = {
@@ -139,6 +139,18 @@ const ChessBoard = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (analysis.before && analysis.after) {
+      const totalLoss = centipawnLoss(analysis.before, analysis.after);
+      if (totalLoss < 150) {
+        console.log("Move is fine, let's keep going");
+      } else {
+        game.current.undo();
+        setPosition(game.current.fen());
+      }
+    }
+  }, [analysis]);
 
   return (
     <div>
