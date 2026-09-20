@@ -144,10 +144,25 @@ const ChessBoard = () => {
     if (analysis.before && analysis.after) {
       const totalLoss = centipawnLoss(analysis.before, analysis.after);
       if (totalLoss < 150) {
-        console.log("Move is fine, let's keep going");
+        const sourceSquare = analysis.after.bestMove.slice(0, 2);
+        const targetSquare = analysis.after.bestMove.slice(2, 4);
+
+        game.current.move({
+          from: sourceSquare,
+          to: targetSquare,
+          promotion: "q",
+        });
+        setPosition(game.current.fen());
+
+        setAnalysis((prev) => {
+          return { before: prev.after, after: null };
+        });
       } else {
         game.current.undo();
         setPosition(game.current.fen());
+        setAnalysis((prev) => {
+          return { ...prev, after: null };
+        });
       }
     }
   }, [analysis]);
