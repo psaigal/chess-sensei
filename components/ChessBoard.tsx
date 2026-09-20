@@ -39,6 +39,13 @@ const ChessBoard = () => {
     return evaluation;
   };
 
+  const centipawnLoss = (analysisBefore: Analysis, analysisAfter: Analysis) => {
+    const normalizeBefore = normalizeEval(analysisBefore);
+    const normalizeAfter = normalizeEval(analysisAfter);
+
+    return normalizeBefore - normalizeAfter;
+  };
+
   const onPieceDrop = ({
     sourceSquare,
     targetSquare,
