@@ -7,6 +7,7 @@ import { Chessboard } from "react-chessboard";
 type Analysis = {
   evaluation: number;
   bestMove: string;
+  sideToMove: string;
 };
 
 type TotalAnalysis = {
@@ -26,8 +27,17 @@ const ChessBoard = () => {
   });
   const [isThinking, setIsThinking] = useState(false);
   const latestScore = useRef<number | null>(null);
+  const sideToMove = useRef<"white" | "black">("white");
 
   console.log({ analysis });
+
+  const normalizeEval = (analysis: Analysis) => {
+    const { sideToMove, evaluation } = analysis;
+    if (sideToMove === "black") {
+      return -evaluation;
+    }
+    return evaluation;
+  };
 
   const onPieceDrop = ({
     sourceSquare,
@@ -49,6 +59,8 @@ const ChessBoard = () => {
         to: targetSquare,
         promotion: "q",
       });
+
+      sideToMove.current = game.current.turn() === "b" ? "black" : "white";
 
       stockfishWorker.current?.postMessage(
         `position fen ${game.current.fen()}`,
@@ -74,6 +86,7 @@ const ChessBoard = () => {
     stockfishWorker.current.onmessage = (event) => {
       const eventData = event.data;
       if (eventData === "uciok") {
+        sideToMove.current = game.current.turn() === "b" ? "black" : "white";
         stockfishWorker.current?.postMessage(
           `position fen ${game.current.fen()}`,
         );
@@ -87,13 +100,25 @@ const ChessBoard = () => {
       const bestMove = eventData.match(/bestmove (\S+)/);
       if (bestMove) {
         setAnalysis((prev) => {
-          return {
-            ...prev,
-            before: {
-              evaluation: latestScore.current!,
-              bestMove: bestMove[1],
-            },
-          };
+          if (!prev.before) {
+            return {
+              ...prev,
+              before: {
+                evaluation: latestScore.current!,
+                bestMove: bestMove[1],
+                sideToMove: sideToMove.current,
+              },
+            };
+          } else {
+            return {
+              ...prev,
+              after: {
+                evaluation: latestScore.current!,
+                bestMove: bestMove[1],
+                sideToMove: sideToMove.current,
+              },
+            };
+          }
         });
       }
     };
@@ -107,18 +132,6 @@ const ChessBoard = () => {
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (!isThinking) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setIsThinking(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [isThinking]);
 
   return (
     <div>
