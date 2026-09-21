@@ -28,6 +28,7 @@ const ChessBoard = () => {
   const [isThinking, setIsThinking] = useState(false);
   const latestScore = useRef<number | null>(null);
   const sideToMove = useRef<"white" | "black">("white");
+  const analysisPurpose = useRef<"before" | "after">("before");
 
   console.log({ analysis });
 
@@ -68,6 +69,7 @@ const ChessBoard = () => {
       });
 
       sideToMove.current = game.current.turn() === "b" ? "black" : "white";
+      analysisPurpose.current = "after";
 
       stockfishWorker.current?.postMessage(
         `position fen ${game.current.fen()}`,
@@ -107,7 +109,7 @@ const ChessBoard = () => {
       const bestMove = eventData.match(/bestmove (\S+)/);
       if (bestMove) {
         setAnalysis((prev) => {
-          if (!prev.before) {
+          if (analysisPurpose.current === "before") {
             return {
               ...prev,
               before: {
@@ -152,11 +154,20 @@ const ChessBoard = () => {
           to: targetSquare,
           promotion: "q",
         });
+
         setPosition(game.current.fen());
 
         setAnalysis((prev) => {
-          return { before: prev.after, after: null };
+          return { before: null, after: null };
         });
+
+        analysisPurpose.current = "before";
+        sideToMove.current = game.current.turn() === "b" ? "black" : "white";
+
+        stockfishWorker.current?.postMessage(
+          `position fen ${game.current.fen()}`,
+        );
+        stockfishWorker.current?.postMessage("go depth 10");
       } else {
         game.current.undo();
         setPosition(game.current.fen());
