@@ -158,6 +158,26 @@ const ChessBoard = () => {
   }, []);
 
   useEffect(() => {
+    const fetchExplanation = async (totalLoss: number) => {
+      try {
+        const explanationRes = await fetch("/api/explain", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pendingUserMove: pendingUserMove.current,
+            analysisBefore: analysis.before,
+            analysisAfter: analysis.after,
+            totalLoss: totalLoss,
+          }),
+        });
+
+        const responseJson = await explanationRes.json();
+        console.log(responseJson);
+      } catch (error) {
+        console.error("Failed to fetch");
+      }
+    };
+
     if (analysis.before && analysis.after) {
       const totalLoss = centipawnLoss(analysis.before, analysis.after);
       if (totalLoss < 150) {
@@ -183,6 +203,7 @@ const ChessBoard = () => {
         setAnalysis((prev) => {
           return { ...prev, after: null };
         });
+        fetchExplanation(totalLoss);
       }
     }
   }, [analysis]);
